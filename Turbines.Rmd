@@ -1,0 +1,208 @@
+---
+title: "Practica  Notebook -  Jorge Oliva"
+output:
+  html_notebook: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+En esta practica, consideraremos datos de un artculo reciente:
+Vidal, Y.; Aquino, G.; Pozo, F.; Gutierrez-Arias, J.E.M. Structural Health Monitoring
+for Jacket-Type OshoreWind Turbines: Experimental Proof of Concept. Sensors 2020,
+20, 1835,
+En el  que se considera una turbina eolica a escala y el objetivo es poder detectar problemas  estructurales en condiciones lo mas realistas posibles. 
+
+In this point we are going to import the data :
+
+```{r}
+#install.packages ("R.matlab")
+library (R.matlab )
+#We import the data2
+data <- readMat ('data_tower_v42m.mat')
+
+```
+1. [10 %] Escalar los datos de la matriz  tal y como se explica en la Seccion 2.1 del modulo. Llamar a la matriz resultante X.
+
+Answer :  We are goin to SCALE the matrix that we have in data$Y and save in X. with the argument center=TRUE, we are going substract to each item the mean of its colum, with the argument scale=TRUE we  divide by standard desviation  each result of the previous sentence we print the previos and posterior data to scale to see the differences
+```{r}
+data$Y[1:5,1:5]
+X<-scale(data$Y,center  = TRUE,scale = TRUE)
+X[1:5,1:5]
+
+```
+2. [10 %] Calcular la matriz de covarianzas tal y como se explica en la Seccion 2.2 del modulo.
+Llamar CX a la matriz de covarianzas. >Os ha sido posible el calculo de la matriz de covarianzas?
+O habeis tenido un error por falta de memoria? En este caso, ir al problema 4. Os haya salido o no el calculo de la matriz de covarianzas, buscar la manera de calcular CX[2,3].
+
+Answer : We can't calculate the covariancewe, we made the second options covariance of colum 2 and 3 
+```{r}
+CX<-cov(X[,2:3])
+CX
+```
+3. [10 %] Si habeis podido calcular la matriz de covarianzas, calcular sus valores propios y sus
+vectores propios. Llamar P a la matriz que tiene por columnas los vectores propios de la
+matriz de covarianzas, ordenados segun la magnitud de los valores propios. >Os ha sido
+posible el calculo de los valores y de los vectores propios? >O habeis tenido un error por falta
+de memoria? Justicar vuestra respuesta. En este caso, ir al problema 4.
+
+Answer : We can't calculate the covariance, because the  computer can't allocate 25 GB, how alternative we get the covariance between the column 2 and 3,  the points more important is that they have a lower correlation  -0.003781788 , the diagonal items al equal to 1,  this is because our data are normalized (scale) the variance are 1. In conclusion, we have a correlation but this is not mean that we have a causal relation
+
+```{r}
+CX<-cov(X)
+CX
+```
+
+```{r}
+CX<-cov(X[,2:3])
+CX
+eigCx<-eigen(CX)
+eigCx
+
+```
+4. [10 %] Calcular directamente el analisis de componentes principales con la instruccion prcomp, llamando a la estructura resultante pca:
+```{r}
+pca <- prcomp (X, center=TRUE, scale = TRUE )
+```
+pca.rotation es la matriz P que tiene por columnas los vectores propios de la matriz de
+covarianzas, ordenados segun la magnitud de los valores propios. Cual es la dimension de
+pca.rotation que obteneis y cual es la dimension teorica que debera tener esta matriz?
+Que esta pasando?
+
+Answer: The dimension of pca.rotation is 58008 x 328 The theoric dimension for a pca.rotation is a matrix of  mxm dimension(58008X58008), for memory reason I can't obtain the covariance matrix, in consequence, I use the instruction prcomp ,than I think that is an algorithm that made some kind of reduction of m (l<m), and this is compatible with the perspective that why we are using the  PCA: reduce the dimensionality and identify the variable more relevant.
+```{r}
+dim(pca$rotation)
+```
+5. [10 %] Considerar vuestra fecha de nacimiento en la forma aammdd, por ejemplo 760827. Calcular,
+con R lo siguiente 81 + aammdd % % 10 y llamar al resultado S. >Cuantas componentes
+principales N son necesarias para retener un porcentaje de variabilidad igual o superior al
+S %? >Que porcentaje de reduccion representa trabajar con S componentes principales en
+lugar de todos los datos?
+
+Answer: We use summary(pca) to identify that We need 47 components (from PC1 to PC47) to have a accumulative variability equal or greater than S(81).we are going to prove that this is correct calculating the eigenvalues. In the next point  to obtain the percentage of reduction we have how data provide that 19026624 as a Total and if we use the 47 components we have 2726000 and this represents a reduction of 85.67%
+
+```{r}
+S<-81 + 720930 %% 10
+S
+N<-47
+eigenvalues<-(pca$sdev)^2
+variance<-eigenvalues[1:N]*100/sum(eigenvalues)
+accumulative<-cumsum(variance)
+accumulative
+
+
+```
+6. [10 %] Representar graficamente | en un unico grafico | los 328 puntos formados por la
+proyeccion de los datos originales normalizados sobre la primera y la segunda componentes
+principales. Utilizar un color diferente para cada uno de los cuatro estados estructurales
+(saludable, da~no en el nivel 1, da~no en el nivel 2 y da~no en el nivel 3). >Observais algo? >
+En que disposicion geometrica se encuentran los puntos?
+
+Answer: The data shows the different groups in circles ordered from inside to outside :
+the first circle is the group  green  which means that have a damaged structure in the level 2
+the second  circle is the group  black wich means that structure is ok
+the third  circle is the group  blue   which means that have a damaged structure in the level 3
+the fourth circle is the group  red   which means that have a damaged structure in the level 1
+```{r}
+TRANS<-X%*%pca$rotation[,1:2]
+
+plot(TRANS[,1],
+     TRANS[,2],
+     col = rep(1:4, each = 82),
+     xlab="PC1", 
+     ylab="PC2", 
+     main = "plot PC1 and PC2")
+legend("bottomright", legend = paste("Group", 1:4), col = 1:4, pch = 19, bty = "n")
+
+
+```
+
+7. [10 %] Representar gracamente | en un unico graco | los 328 puntos formados por la
+proyeccion de los datos originales normalizados sobre la primera y la tercera componentes
+principales. Utilizar un color diferente para cada uno de los cuatro estados estructurales
+(saludable, da~no en el nivel 1, dano en el nivel 2 y da~no en el nivel 3). >Observais algo? >En
+que disposicion geometrica se encuentran los puntos?
+
+Answer: The data shows , a equal distribution in the PC1 axis  and some differences in the axis PC3 , the group red which means damage structure in the level 1 is in the top and the bottom of the axis PC3 in the range +- from 100 to 200.the others  groups are in the middle of the axis PC3 in the range approximately from -50 to +50.
+
+```{r}
+TRANS2<-X%*%cbind(pca$rotation[,1],pca$rotation[,3])
+
+plot(TRANS2[,1],
+     TRANS2[,2],
+     col = rep(1:4, each = 82),
+     xlab="PC1", 
+     ylab="PC3", 
+     main = "plot PC1 and PC3")
+legend("bottomright", legend = paste("Group", 1:4), col = 1:4, pch = 19, bty = "n")
+
+```
+8. [10 %] Nos han enviado nuevos datos (provenientes de 10 nuevas estructuras) y tenemos
+que decidir si cada uno de los datos pertenece a una estructura saludable o si tiene da~no.
+
+Importar los datos que se encuentran en tower_data_new.mat y guardar el resultado en
+dataN (como habeis hecho con los datos del archivo data_tower_v42m.mat). Para acceder a
+los nuevos datos teneis que escribir dataN-Zs. Para proyectar los datos sobre el modelo que
+hemos generado en la pregunta 4, teneis primero que normalizar los datos respecto a los
+datos originales, es decir, a cada elemento de cada columna de la matriz dataN-Zs hay
+que restarle la media de todos los datos de la misma columna de la matriz data$Y. Hay que
+hacer lo mismo con la desviacion tiica, es decir, cada elemento de cada columna de la matriz
+dataN-Zs se ha de dividir por la desviacion tiica de todos los datos de la misma columna
+de la matriz data-Y. Llamar Z a la nueva matriz normalizada. Recordar que Z contiene 10
+las y 58008 columnas.
+
+Answer :  We are going to SCALE the new matrix that we have in dataN$Z and save in Z. with center=TRUE, we are going  subtract to each item the mean of its colum, with scale=TRUE we divide by its standard deviation to each result of the previous sentence. we print the previous and posterior data to the SCALE process,  to see the differences.
+```{r}
+#We import the data new
+dataN <- readMat ('tower_data_new.mat')
+dataN$Z[1:5,1:5]
+Z<-scale(dataN$Z,center  = TRUE,scale = TRUE)
+Z[1:5,1:5]
+
+```
+9. [10 %] Proyectar los datos de la matriz Z sobre el espacio vectorial generado por las componentes principales mediante el producto matricial Z*pca-rotation. Llamar al resultado T.
+Comprobar que T es una matriz de 10  y 328 columnas.
+
+Answer: We use the instruction to prove that matrix dimension is 10 by 328
+```{r}
+T<-Z%*%cbind(pca$rotation)
+dim(T)
+
+```
+10. [10 %] Considerar vuestra fecha de nacimiento en la forma aammdd, por ejemplo 760827.
+Calcular, con R, lo siguiente 1 + aammdd % % 9 y llamar al resultado U. Recuperar el grafico
+bidimensional de la pregunta 6 (primera componente principal versus segunda componente
+principal) y anadir, uno a uno, los dos puntos de las las U y U+1. Para cada punto, vi-
+sualmente (por ejemplo, segun un criterio de proximidad), intentar clasicar, si podeis, las
+dos estructuras. A la vista del problema, proponer un metodo sistematico para clasificar de
+forma automatica un nuevo punto (pregunta abierta).
+
+Answer : My proposal is use k-Nearest Neighbors Method, this classification method divides a training dataset into groups of k observations using a Euclidean Distance measure to determine similarity between “neighbors”. These classification groups are used to assign categories to each member of the validation training set.
+```{r}
+# We calculate U and show the value
+U<-1 + 720930 %% 9
+U
+
+#We add U and U+1 to TRANS from the 6 exercise
+TFINAL<-rbind(TRANS,T[U,1:2])
+
+#Show the graph
+plot(TFINAL[,1],
+     TFINAL[,2],
+     col = rep(1:4, each = 82),
+     xlab="PC1", 
+     ylab="PC2", 
+     main = "plot PC1 and PC2")
+legend("bottomright", legend = paste("Group", 1:4), col = 1:4, pch = 19, bty = "n")
+
+#We add U+1 to TRANS from the 6 exercise
+TFINAL<-rbind(TRANS,T[U+1,1:2])
+#Show the graph
+plot(TFINAL[,1],
+     TFINAL[,2],
+     col = rep(1:4, each = 82),
+     xlab="PC1", 
+     ylab="PC2", 
+     main = "plot PC1 and PC2")
+legend("bottomright", legend = paste("Group", 1:4), col = 1:4, pch = 19, bty = "n")
+
+```
