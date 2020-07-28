@@ -1,0 +1,280 @@
+---
+title: "PRACTICE 2 - Cadenas de Markov discretas / Progresion de enfermedades cronicas"
+output:
+  html_notebook: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Jorge Oliva Ramos
+
+En esta practica, sin embargo, consideraremos datos mas antiguos, ya consolidados, de otro articulo
+cientifico revisado por pares:
+Bruce A. Craig, Peter P. Sendi (2002). \Estimation of the Transition Matrix of a
+Discrete-Time Markov Chain". Health Economics, 11:33{42,
+donde se consideran datos de una cohorte de estudio (Swiss HIV cohort study, SHCS, www.shcs.ch)
+para estimar las probabilidades de transicion en un mes del numero de celulas CD4, basandose en
+datos acumulados de seis meses. Las celulas CD4 son las celulas que mata el virus del VIH (virus
+de la inmunodeciencia humana). A medida que la infeccion por VIH progresa, la cantidad de estas
+celulas disminuye. Cuando el numero de CD4 en una persona baja de 200 celulas por milimetro
+cubico, se le diagnostica con SIDA (sindrome de inmunodeciencia adquirida:
+La Tabla 1 muestra las transiciones observadas en el numero de celulas CD4 (# CD4) en un periodo
+de seis meses para 1.086 personas entre los a~nos 1993 y 1995. Se establecen tres grupos:
+Cuadro 1: Transiciones observadas en el numero de celulas CD4 en un periodo de seis meses. El
+valor del parametro (delta) lo calculareis en el ejercicio 1.
+
+
+1. [5 %] Considerar vuestra fecha de nacimiento en la forma aammdd, por ejemplo 760827. Calcular,
+con R, el siguiente codigo:
+De las personas analizadas en la Tabla 1, cuantas han empeorado su situacion al cabo de
+seis meses?
+
+
+Solution:
+If we add delta (5) , we are going to have the next escenary :
+
+*In the relation between 0-49 and 50-74 we obtain 126 persons worse
+
+*In the relation between 50-74 and >=75 we obtain 28 persons better 
+
+*In the relation between 0-49 and >= 75 we obtain 6 persons better
+
+The final conclusion is that after 6 months we have 92 persons worse
+
+```{r}
+set.seed ( 720930 )
+delta <- sample (1:10 , 1)
+delta
+x1<-c(682+delta,33,25,154+delta,64,47,19,19,43)
+P6 <- matrix ( data =x1, byrow =byRow , nrow =3, dimnames = list (labels , labels ))
+P6
+
+```
+
+
+2. [10 %] La matriz de la Tabla 1 no es la matriz de transicion. Considerar la Tabla 1, hacer
+las operaciones matematicas necesarias y denir la matriz de transicion P6 por las (no por
+columnas!). Si generais un vector x con los nueve valores, por las, podeis generar la matriz
+P6 de la siguiente manera:
+
+Solution:
+
+We build the transition matrix by row , there are another option to build the transition matrix with loop(for and while) but we choose this because is more simple and clear
+
+```{r}
+require(scales)
+labels <-c("0 -49","50 -74"," >=75")
+byRow <- TRUE
+x<-c(682+delta,33,25,154+delta,64,47,19,19,43)
+P6 <- matrix ( data =x, byrow =byRow , nrow =3, dimnames = list (labels , labels ))
+P6<-P6/rowSums(P6)
+print(P6)
+```
+
+
+3. [10 %] Comprobar que la suma de las probabilidades de cada una de las tres las es 1.
+
+Solution:
+
+We check that probabilities add is 1 for each row, we could use loop (for and while).
+
+```{r}
+print(paste0("The total of first row is : " ,sum(P6[1,])))
+print(paste0("The total of second row is : " ,sum(P6[2,])))
+print(paste0("The total of third row is : " ,sum(P6[3,])))
+```
+
+
+4. [10 %] Crear la cadena de Markov discreta definida por la matriz de transiciones P6, y llamarla
+mcP6. Ayudaros del siguiente codigo, donde P6 es la matriz definida en el apartado 2:
+
+Solution:
+
+We buil the discrete markov chain asociate to the transition matrix P6 , and show its  resum 
+
+```{r}
+#install.packages ("markovchain")
+library ("markovchain")
+mcP6 <-new ("markovchain",states =labels , byrow =byRow , transitionMatrix =P6 , name ="Transicion CD4 seis meses ")
+mcP6
+
+```
+
+
+5. [5 %] Hacer un diagrama de vuestra cadena de Markov discreta. Podeis ayudaros del siguiente
+codigo:
+
+Solution:
+
+We buil the diagram asociate to our  discrete markov chain mcP6
+
+```{r}
+plot (mcP6 , package =" diagram ",cex =.6)
+```
+6. [10 %] La matriz de transicion P6 denida en el apartado 2 corresponde a las probabilidades
+de pasar de un estado a otro en un perodo de seis meses. Si estamos interesados en la
+matriz de transicion que corresponde a las probabilidades de pasar de un estado a otro en un
+perodo de un mes, los autores del artculo proponen:
+(i) Diagonalizar la matriz P6, es decir, expresar la matriz P6 como:
+P6 = V DV 􀀀1;
+donde D es una matriz diagonal.
+(ii) Entonces, la matriz de transicion P1 que corresponde a las probabilidades de pasar de
+un estado a otro en un periodo de un mes es
+P1 = V D1=6V 􀀀1;
+donde D1=6 es la matriz diagonal donde cada elemento es igual a la raz sexta de los
+elementos de la matriz D.
+Calcular, pues, la matriz V y llamarla V, as como la matriz diagonal D, y llamarla D.
+Comprobar que, en efecto, P6 coincide con su descomposicion:
+
+
+Solution: 
+If we want to  diagonalize the matrix P6, first we need to obtain the P6 eigenvalues and eigenvector witt the next instructions:
+
+
+*We obtain the eigen : eigen(P6)
+
+*We asigned the eigenvalue to D
+
+*We asigned the eigenvector to V
+
+We applied the formule provided and check that its descomposition is correct because the outocume  is the original P6
+
+
+```{r}
+#Diagonalize the matrix P6
+eigen_data<-eigen(P6)
+D<-diag(eigen_data$values)
+V<-eigen_data$vectors
+V %*% D %*% solve(V)
+
+```
+7. [10 %] Calcular la matriz de transicion P1 tal y como se explica en el apartado 6. Comprobar
+que la suma de las probabilidades de cada una de las las es 1. Crear la cadena de Markov
+discreta denida por la matriz de transiciones P1, y llamarla mcP1.
+
+Solution: 
+
+To obtain the matrix transition for the first mont we are goint to appie the formule provided in the point 6 and assigned to P1, the more relevant  point in this operation is  raise the diagonal  to the power 1/6 (  first month ), 
+
+The second step is to check that all rows add 1.
+
+Finally , We buil the discrete markov chain asociate to the new transition matrix P1 , and show its  resum 
+
+
+```{r}
+#Obtein the transition matrix for the first month 
+diagonal<-(D)^(1/6)
+P1 = V %*% diagonal %*% solve(V)
+
+#Check that all rows add 1
+print(paste0("The total of first row is : " ,sum(P1[1,])))
+print(paste0("The total of second row is : " ,sum(P1[2,])))
+print(paste0("The total of third row is : " ,sum(P1[3,])))
+# Get markov chain 
+library ("markovchain")
+mcP1 <-new ("markovchain",states =labels , byrow =byRow , transitionMatrix =P1 , name ="Transicion CD4 1 month ")
+mcP1
+
+```
+
+8.-[10 %] >Que relacion existe entre las matrices P16k y P6k, donde k 2 N? >Las matrices son
+siempre iguales? >Son siempre diferentes? >Depende del valor de k? Justicar la respuesta.
+
+Solution: 
+In absract P1 to the power 6k and P6 to the power 1k are the same , both represent the transition matrix at 6 month , to arrive to this conclusion we start with the Chapman-Kolmogorov  equation that say that we could arrive to any status with an initial vector and  multiply with the transition matrix to the poweer k that we want to arrive.
+The matrix P1 and P6 are differents and to be always equal need to have the power in the proportions , defintely k is the key to have the transition matrix equal.
+
+
+9. [10 %] Calcular la distribucion estacionaria de las cadenas de Markov mcP1 y mcP6. >Que
+observais? Interpretar los resultados.
+
+Solution :
+
+They are the same and is logical for this reasons:
+
+* Both manage the same initial transition matrix
+* Both have the same eigen values and the same eigenvector
+We are sure that when we arrive to this proportions the data are going to be the same
+
+```{r}
+
+#Proportion boundaries P1
+eigenP1<-eigen(t(P1))
+vap<-abs(eigenP1$values)
+veps<-eigenP1$vectors
+steadystate<-abs(veps[,1])
+(steadystate<-steadystate/sum(steadystate))
+#Proportion boundaries mcP1
+steadyStates (mcP1)
+
+
+#Proportion boundaries P6
+eigenP6<-eigen(t(P6))
+vap<-abs(eigenP6$values)
+veps<-eigenP6$vectors
+steadystate<-abs(veps[,1])
+(steadystate<-steadystate/sum(steadystate))
+#Proportion boundaries mcP6
+steadyStates (mcP6)
+
+```
+10. [10 %] >Cuantos semestres N deben pasar para que una persona que esta en el grupo 0- 49
+pase a estar en el grupo >= 75 con una probabilidad superior al 5 %? >Se puede alcanzar esta
+cota en menos de 6N meses?
+
+Solution:
+
+A person from group 0-49 could reach the group >=75 after 10 months 
+```{r}
+aux = mcP1
+print(aux [1 ,3])
+k=1
+while ( aux [1 ,3] <=0.05) {
+  aux= aux *mcP1
+  k=k+1
+  }
+k 
+print(aux [1 ,3])
+
+```
+
+11. [10 %] Inventaros una matriz de transicion PX que tenga la primera la igual que P6 y que
+tenga un estado absorbente. >Es posible hacerla reducible? Justicar la respuesta.
+
+Solution :
+This matrix has an absorbent state, but is not reducible because we could arrive from any state to another :
+Si,<->Sj
+
+```{r}
+PX<-matrix(1:9/10, nrow = 3, ncol = 3)
+PX[1,]<-P6[1,]
+PX[3,]<-0
+PX[2,3]<-0.3
+PX[3,1]<-1
+PX
+
+
+```
+
+12. Para facilitar la correccion y la localizacion de los posibles errores de la programacion de
+vuestro codigo en R, completar la siguiente tabla en relacion a las variables creadas durante
+la resolucion de esta practica:
+delta= valor
+det(P1)
+steadyStates(mcP1)[1]
+det(P6)
+steadyStates(mcP6)[3]
+
+```{r}
+delta
+det(P1)
+steadyStates(mcP1)[1]
+det(P6)
+steadyStates(mcP6)[3]
+```
+
