@@ -18,7 +18,7 @@ In this point we are going to import the data :
 #install.packages ("R.matlab")
 library (R.matlab )
 #We import the data2
-data <- readMat ('data_tower_v42m.mat')
+data <- readMat ('TurbinesData/data_tower_v42m.mat')
 
 ```
 1. [10 %] Escalar los datos de la matriz  tal y como se explica en la Seccion 2.1 del modulo. Llamar a la matriz resultante X.
@@ -153,7 +153,7 @@ las y 58008 columnas.
 Answer :  We are going to SCALE the new matrix that we have in dataN$Z and save in Z. with center=TRUE, we are going  subtract to each item the mean of its colum, with scale=TRUE we divide by its standard deviation to each result of the previous sentence. we print the previous and posterior data to the SCALE process,  to see the differences.
 ```{r}
 #We import the data new
-dataN <- readMat ('tower_data_new.mat')
+dataN <- readMat ('TurbinesData/tower_data_new.mat')
 dataN$Z[1:5,1:5]
 Z<-scale(dataN$Z,center  = TRUE,scale = TRUE)
 Z[1:5,1:5]

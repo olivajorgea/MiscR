@@ -261,20 +261,4 @@ PX
 
 ```
 
-12. Para facilitar la correccion y la localizacion de los posibles errores de la programacion de
-vuestro codigo en R, completar la siguiente tabla en relacion a las variables creadas durante
-la resolucion de esta practica:
-delta= valor
-det(P1)
-steadyStates(mcP1)[1]
-det(P6)
-steadyStates(mcP6)[3]
-
-```{r}
-delta
-det(P1)
-steadyStates(mcP1)[1]
-det(P6)
-steadyStates(mcP6)[3]
-```
 
